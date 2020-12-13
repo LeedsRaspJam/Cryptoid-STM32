@@ -1,0 +1,29 @@
+Command list:
+
+INIT # Starts up STM32 section of the board
+    response: OK
+    
+SETM # Set motor direction and speed
+    arguments: motor (1-4), direction (FWD, REV) & speed (0-255)
+    response: OK
+
+LEDS # Set LED colour
+    arguments: number (0-255), red (0-255), green (0-255), blue (0-255)
+    response: OK
+
+LEDA # Set all LEDs
+    arguments: red (0-255), green (0-255), blue (0-255)
+    response: OK
+
+SEXT # Set External
+    arguments: type (SRVO, OUTP, INPT)
+    response: OK (for every pin)
+
+SRVO # Set servo
+    arguments: number (1, 2), angle (0-180)
+    response: OK
+
+RSTS # Software Reset
+    response: OK
+
+All commands and arguments end in a CRLF terminator (\r\n)
