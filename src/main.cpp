@@ -170,7 +170,7 @@ void loop() {
   } else if (serialCmd == "RSTS\r") { // Software Reset
     Serial3.print("OK\r\n");
     NVIC_SystemReset();
-  } else if (serialCmd == "TEST\r") {
+  }/* else if (serialCmd == "TEST\r") {
     digitalWrite(M1_A, HIGH);
     digitalWrite(M1_B, LOW);
     digitalWrite(M2_A, HIGH);
@@ -184,7 +184,7 @@ void loop() {
     analogWrite(D1_ENB, 255);
     analogWrite(D2_ENA, 255);
     analogWrite(D2_ENB, 255);
-  } else {
+  } */else {
     Serial3.print("ERROR\r\n"); // ERROR - Error if command not recognized
   }
 }
