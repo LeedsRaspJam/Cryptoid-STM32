@@ -18,6 +18,7 @@ Main STM32 Firmware
 #include <Arduino.h>
 #include <Servo.h>
 #include <Adafruit_NeoPixel.h>
+#include <Version.h>
 
 //**********************
 //Motor Control      //*
@@ -81,10 +82,12 @@ void recvArgs(int argsRequired) {
 
 void loop() {
   serialCmd = recv();
+
   if(serialCmd == "INIT\r") { // INIT - Initialize board
     Serial3.print("OK\r\n"); // send response
     digitalWrite(PC13, HIGH);
-  } else if (serialCmd == "SETM\r") { // SETM - Set motor
+  } 
+  else if (serialCmd == "SETM\r") { // SETM - Set motor
     Serial3.print("OK\r\n");
     recvArgs(3);
     Serial3.print("Motor ID: " + args[0] + "\r\n");
@@ -115,8 +118,23 @@ void loop() {
       digitalWrite(mcSPins[2], HIGH);
     }
     analogWrite(mcSPins[3], args[2].toInt()); // Set speed through PWM
-
-  } else if (serialCmd == "LEDS\r") { // LEDS - LED Set
+  } 
+  else if (serialCmd == "STPM\r") { // Stop Motor
+    Serial3.print("OK\r\n");
+    recvArgs(1);
+    if(args[0].toInt() == 1) {
+      analogWrite(D1_ENA, 0);
+    } else if (args[0].toInt() == 2) {
+      analogWrite(D1_ENB, 0);
+    } else if (args[0].toInt() == 3) {
+      analogWrite(D2_ENA, 0);
+    } else if (args[0].toInt() == 4) {
+      analogWrite(D2_ENB, 0);
+    } else {
+      Serial3.print("ERROR\r\n");
+    }
+  } 
+  else if (serialCmd == "LEDS\r") { // LEDS - LED Set
     Serial3.print("OK\r\n");
     recvArgs(4);
     Serial3.print("Number is: " + args[0] + "\r\n");
@@ -125,7 +143,8 @@ void loop() {
     Serial3.print("B: " + args[3] + "\r\n");
     pixels.setPixelColor(args[0].toInt(), pixels.Color(args[1].toInt(), args[2].toInt(), args[3].toInt()));
     pixels.show();
-  } else if (serialCmd == "LEDA\r") { // LEDA - Set all LEDs
+  } 
+  else if (serialCmd == "LEDA\r") { // LEDA - Set all LEDs
     Serial3.print("OK\r\n");
     recvArgs(3);
     Serial3.print("R: " + args[0] + "\r\n");
@@ -135,7 +154,8 @@ void loop() {
       pixels.setPixelColor(i, pixels.Color(args[0].toInt(), args[1].toInt(), args[2].toInt())); // set pixel
       pixels.show();
     }
-  } else if (serialCmd == "SEXT\r") { // Set External
+  } 
+  else if (serialCmd == "SEXT\r") { // Set External
     for(int i = 0; i < 6; i++) {
       recvArgs(1); // Recieve data
       if (args[0] == "SRVO\r" && i == (EXT_1 || EXT_2)) { // If the pin is connected to a servo + that configuration is supported
@@ -153,7 +173,8 @@ void loop() {
         break; // Crash loop
       }
     }
-  } else if (serialCmd == "SRVO\r") {
+  } 
+  else if (serialCmd == "SRVO\r") { // Set Servo
     recvArgs(2); // Recieve data
     if (args[0].toInt() == 1 && servo1.attached() == false) {
       Serial3.print("ERROR\r\n");
@@ -166,25 +187,17 @@ void loop() {
         servo2.write(args[1].toInt());
       }
     }
-  
-  } else if (serialCmd == "RSTS\r") { // Software Reset
+  } 
+  else if (serialCmd == "RSTS\r") { // Software Reset
     Serial3.print("OK\r\n");
     NVIC_SystemReset();
-  }/* else if (serialCmd == "TEST\r") {
-    digitalWrite(M1_A, HIGH);
-    digitalWrite(M1_B, LOW);
-    digitalWrite(M2_A, HIGH);
-    digitalWrite(M2_B, LOW);
-    digitalWrite(M3_A, HIGH);
-    digitalWrite(M3_B, LOW);
-    digitalWrite(M4_A, HIGH);
-    digitalWrite(M4_B, LOW);
-
-    analogWrite(D1_ENA, 255);
-    analogWrite(D1_ENB, 255);
-    analogWrite(D2_ENA, 255);
-    analogWrite(D2_ENB, 255);
-  } */else {
-    Serial3.print("ERROR\r\n"); // ERROR - Error if command not recognized
+  } 
+  else if (serialCmd == "VERS\r") { // Version
+    Serial3.print("OK\r\n");
+    Serial3.print("Version ID: " + String(VERSION) + "\r\n");
+    Serial3.print("Built at: " + String(BUILD_TIMESTAMP) + "\r\n");
+  } 
+  else { // ERROR - Error if command not recognized
+    Serial3.print("ERROR\r\n");
   }
 }
