@@ -44,17 +44,19 @@ Main STM32 Firmware
 #define EXT_6 25     //*
                      //*
 // Other             //*
-#define WS_DATA 10   //*
+#define WS_DATA 29   //*
 #define RX 27        //*
 #define TX 26        //*
-#define numPixels 2  //*
+#define numPixels 64 //*
+#define SPKR 28      //*
 //**********************
 
 String serialStr, serialCmd;
 String args[3];
-int mcBPins[8] = {M1_A, M1_B, M2_A, M2_B, M3_A, M3_B, M4_A, M4_B};
+int outPins[8] = {M1_A, M1_B, M2_A, M2_B, M3_A, M3_B, M4_A, M4_B};
 int extPins[7] = {EXT_1, EXT_2, EXT_3, EXT_4, EXT_5, EXT_6};
 int mcSPins[4];
+int rInt, gInt, bInt;
 Servo servo1, servo2;
 Adafruit_NeoPixel pixels(numPixels, WS_DATA, NEO_GRB + NEO_KHZ800);
 HardwareSerial Serial3(RX, TX);
@@ -63,7 +65,14 @@ void setup() {
   Serial3.begin(115200, SERIAL_8E1); // open Serial Line
   Serial3.print("\r\nCryptoid - Main Control Board - STM32 Operational\r\n"); // send welcome msg
   for(int i = 0; i < 8; i++) {
-    pinMode(mcBPins[i], OUTPUT);
+    pinMode(outPins[i], OUTPUT);
+  }
+  tone(SPKR, 1500, 750); // beep
+  pixels.begin(); // init LEDs
+  pixels.show(); // clear LEDs
+  for(int i = 0; i < numPixels; i++) { // set all LEDs to Red
+    pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+    pixels.show();
   }
 }
 
@@ -83,13 +92,21 @@ void recvArgs(int argsRequired) {
 void loop() {
   serialCmd = recv();
 
-  if(serialCmd == "INIT\r") { // INIT - Initialize board
+  if (serialCmd == "INIT\r") { // INIT - Initialize board
     Serial3.print("OK\r\n"); // send response
+    tone(SPKR, 1500, 750);
     digitalWrite(PC13, HIGH);
+    pixels.clear(); // clear LEDs
+    for(int i = 0; i < numPixels; i++) { // set all LEDs to Green
+      pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+      pixels.show();
+    }
   } 
   else if (serialCmd == "SETM\r") { // SETM - Set motor
     Serial3.print("OK\r\n");
+    Serial3.print("runtime " + String(millis()) + "ms\r\n");
     recvArgs(3);
+    Serial3.print("runtime " + String(millis()) + "ms\r\n");
     Serial3.print("Motor ID: " + args[0] + "\r\n");
     Serial3.print("Direction is: " + args[1] + "\r\n");
     Serial3.print("Speed is: " + args[2] + "\r\n");
@@ -118,6 +135,7 @@ void loop() {
       digitalWrite(mcSPins[2], HIGH);
     }
     analogWrite(mcSPins[3], args[2].toInt()); // Set speed through PWM
+    Serial3.print("runtime " + String(millis()) + "ms\r\n");
   } 
   else if (serialCmd == "STPM\r") { // Stop Motor
     Serial3.print("OK\r\n");
@@ -141,7 +159,10 @@ void loop() {
     Serial3.print("R: " + args[1] + "\r\n");
     Serial3.print("G: " + args[2] + "\r\n");
     Serial3.print("B: " + args[3] + "\r\n");
-    pixels.setPixelColor(args[0].toInt(), pixels.Color(args[1].toInt(), args[2].toInt(), args[3].toInt()));
+    rInt = args[1].toInt(); // convert strings to integers
+    gInt = args[2].toInt();
+    bInt = args[3].toInt();
+    pixels.setPixelColor(args[0].toInt(), pixels.Color(rInt, gInt, bInt)); // set color
     pixels.show();
   } 
   else if (serialCmd == "LEDA\r") { // LEDA - Set all LEDs
@@ -150,12 +171,16 @@ void loop() {
     Serial3.print("R: " + args[0] + "\r\n");
     Serial3.print("G: " + args[1] + "\r\n");
     Serial3.print("B: " + args[2] + "\r\n");
-    for(int i = 0; i < numPixels; i++) { // loop for all pixels
-      pixels.setPixelColor(i, pixels.Color(args[0].toInt(), args[1].toInt(), args[2].toInt())); // set pixel
+    rInt = args[0].toInt(); // convert strings to integers
+    gInt = args[1].toInt(); // more efficent than recalculating every iteration
+    bInt = args[2].toInt();
+    pixels.clear();
+    for(int i = 0; i < numPixels; i++) { // set every LED to the specified color
+      pixels.setPixelColor(i, pixels.Color(rInt, gInt, bInt));
       pixels.show();
     }
   } 
-  else if (serialCmd == "SEXT\r") { // Set External
+  else if (serialCmd == "EXTS\r") { // Set External
     for(int i = 0; i < 6; i++) {
       recvArgs(1); // Recieve data
       if (args[0] == "SRVO\r" && i == (EXT_1 || EXT_2)) { // If the pin is connected to a servo + that configuration is supported
@@ -196,7 +221,12 @@ void loop() {
     Serial3.print("OK\r\n");
     Serial3.print("Version ID: " + String(VERSION) + "\r\n");
     Serial3.print("Built at: " + String(BUILD_TIMESTAMP) + "\r\n");
-  } 
+  }
+  else if (serialCmd == "SPKR\r") { // Set Speaker
+    Serial3.print("OK\r\n");
+    recvArgs(2);
+    tone(SPKR, args[0].toInt(), args[1].toInt());
+  }
   else { // ERROR - Error if command not recognized
     Serial3.print("ERROR\r\n");
   }

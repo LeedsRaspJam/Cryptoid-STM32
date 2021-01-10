@@ -6,5 +6,5 @@ This repo contains the PlatformIO project for the STM32 microcontroller on Crypt
 
 * **Started Development** - 1st Nov 2020
 * **Feature Complete** - 18th Dec 2020
-* **Bugtest Complete** - ~Jan 2021~
+* **Bugtest Complete** - 10th Jan 2021
 * **Final** - ~Late Feb 2021~
