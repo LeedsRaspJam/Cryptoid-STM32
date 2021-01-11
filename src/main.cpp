@@ -47,16 +47,17 @@ Main STM32 Firmware
 #define WS_DATA 29   //*
 #define RX 27        //*
 #define TX 26        //*
-#define numPixels 64 //*
+#define numPixels 40 //*
 #define SPKR 28      //*
 //**********************
 
-String serialStr, serialCmd;
-String args[3];
+String serialStr, serialCmd, iStr;
+String args[4];
 int outPins[8] = {M1_A, M1_B, M2_A, M2_B, M3_A, M3_B, M4_A, M4_B};
 int extPins[7] = {EXT_1, EXT_2, EXT_3, EXT_4, EXT_5, EXT_6};
 int mcSPins[4];
-int rInt, gInt, bInt;
+int rInt, gInt, bInt, ledID;
+bool verboseOut = false;
 Servo servo1, servo2;
 Adafruit_NeoPixel pixels(numPixels, WS_DATA, NEO_GRB + NEO_KHZ800);
 HardwareSerial Serial3(RX, TX);
@@ -104,12 +105,10 @@ void loop() {
   } 
   else if (serialCmd == "SETM\r") { // SETM - Set motor
     Serial3.print("OK\r\n");
-    Serial3.print("runtime " + String(millis()) + "ms\r\n");
     recvArgs(3);
-    Serial3.print("runtime " + String(millis()) + "ms\r\n");
-    Serial3.print("Motor ID: " + args[0] + "\r\n");
-    Serial3.print("Direction is: " + args[1] + "\r\n");
-    Serial3.print("Speed is: " + args[2] + "\r\n");
+    if(verboseOut) {
+      Serial3.print("Motor ID: " + args[0] + "\r\nDirection: " + args[1] + "\r\nSpeed: " + args[2] + "\r\n"); 
+    }
     if(args[0].toInt() == 1) { // If we're targeting motor X
       mcSPins[1] = M1_A; // Set pins for that motor
       mcSPins[2] = M1_B;
@@ -135,11 +134,13 @@ void loop() {
       digitalWrite(mcSPins[2], HIGH);
     }
     analogWrite(mcSPins[3], args[2].toInt()); // Set speed through PWM
-    Serial3.print("runtime " + String(millis()) + "ms\r\n");
   } 
   else if (serialCmd == "STPM\r") { // Stop Motor
     Serial3.print("OK\r\n");
     recvArgs(1);
+    if(verboseOut) {
+      Serial3.print("Motor ID: " + args[0] + "\r\n");
+    }
     if(args[0].toInt() == 1) {
       analogWrite(D1_ENA, 0);
     } else if (args[0].toInt() == 2) {
@@ -155,22 +156,22 @@ void loop() {
   else if (serialCmd == "LEDS\r") { // LEDS - LED Set
     Serial3.print("OK\r\n");
     recvArgs(4);
-    Serial3.print("Number is: " + args[0] + "\r\n");
-    Serial3.print("R: " + args[1] + "\r\n");
-    Serial3.print("G: " + args[2] + "\r\n");
-    Serial3.print("B: " + args[3] + "\r\n");
+    if(verboseOut) {
+      Serial3.print("LED ID: " + args[0] + "\r\nR: " + args[1] + "\r\nG: " + args[2] + "\r\nB: " + args[3] + "\r\n"); 
+    }
+    ledID = args[0].toInt();
     rInt = args[1].toInt(); // convert strings to integers
     gInt = args[2].toInt();
     bInt = args[3].toInt();
-    pixels.setPixelColor(args[0].toInt(), pixels.Color(rInt, gInt, bInt)); // set color
+    pixels.setPixelColor(ledID, pixels.Color(rInt, gInt, bInt)); // set color
     pixels.show();
   } 
   else if (serialCmd == "LEDA\r") { // LEDA - Set all LEDs
     Serial3.print("OK\r\n");
     recvArgs(3);
-    Serial3.print("R: " + args[0] + "\r\n");
-    Serial3.print("G: " + args[1] + "\r\n");
-    Serial3.print("B: " + args[2] + "\r\n");
+    if(verboseOut) {
+      Serial3.print("R: " + args[0] + "\r\nG: " + args[1] + "\r\nB: " + args[2] + "\r\n"); 
+    }
     rInt = args[0].toInt(); // convert strings to integers
     gInt = args[1].toInt(); // more efficent than recalculating every iteration
     bInt = args[2].toInt();
@@ -181,9 +182,14 @@ void loop() {
     }
   } 
   else if (serialCmd == "EXTS\r") { // Set External
+    Serial3.print("OK\r\n");
     for(int i = 0; i < 6; i++) {
       recvArgs(1); // Recieve data
-      if (args[0] == "SRVO\r" && i == (EXT_1 || EXT_2)) { // If the pin is connected to a servo + that configuration is supported
+      iStr = String(i+1);
+      if(verboseOut) {
+        Serial3.print("Pin: " + iStr + "\r\nFunction: " + args[0] + "\r\n"); 
+      }
+      if (args[0] == "SRVO\r" && (i == 0 || i == 1)) { // If the pin is connected to a servo + that configuration is supported
         if (servo1.attached() == false) { // If servo1 is unset
           servo1.attach(extPins[i]); // Set servo1 to the pin we're currently on
         } else if (servo1.attached() == true) { // If servo1 is set
@@ -200,8 +206,12 @@ void loop() {
     }
   } 
   else if (serialCmd == "SRVO\r") { // Set Servo
+    Serial3.print("OK\r\n");
     recvArgs(2); // Recieve data
-    if (args[0].toInt() == 1 && servo1.attached() == false) {
+    if(verboseOut) {
+      Serial3.print("Servo ID: " + args[0] + "\r\nAngle: " + args[1] + "\r\n");
+    }
+    if (args[0].toInt() == 1 && servo1.attached() == false) { // If EXT pins haven't been set
       Serial3.print("ERROR\r\n");
     } else if (args[0].toInt() == 2 && servo2.attached() == false) {
       Serial3.print("ERROR\r\n");
@@ -225,7 +235,15 @@ void loop() {
   else if (serialCmd == "SPKR\r") { // Set Speaker
     Serial3.print("OK\r\n");
     recvArgs(2);
+    if(verboseOut) {
+      Serial3.print("Frequency: " + args[0] + "\r\nDuration: " + args[1] + "\r\n");
+    }
     tone(SPKR, args[0].toInt(), args[1].toInt());
+  }
+  else if (serialCmd == "VRBS\r") { // Toggle Verbose Serial Output
+    Serial3.print("OK\r\n");
+    Serial3.print("Toggling verbose output...\r\n");
+    verboseOut = !verboseOut;
   }
   else { // ERROR - Error if command not recognized
     Serial3.print("ERROR\r\n");

@@ -37,4 +37,7 @@ SPKR # Output frequency to beeper
     arguments: frequency (hz), duration (ms)
     response: OK
 
+VRBS # Toggle Verbose Serial Output
+    response: OK
+    
 All commands and arguments end in a CRLF terminator (\r\n)
