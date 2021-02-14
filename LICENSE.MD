@@ -1,4 +1,9 @@
-Copyright (c) 2020 LRJ. All Rights Reserved.
+## PlatformIO Version Increment 
+Script by sblantipodi (https://github.com/sblantipodi/platformio_version_increment) - MIT License
+
+## All Other Code
+
+Copyright (c) 2020, 2021 Matthew Charlston. All Rights Reserved.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
