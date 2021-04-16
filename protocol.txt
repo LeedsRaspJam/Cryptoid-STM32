@@ -40,4 +40,16 @@ SPKR # Output frequency to beeper
 VRBS # Toggle Verbose Serial Output
     response: OK
     
+PINH # Set pin HIGH
+    arguments: pin
+    response: OK
+
+PINL # Set pin LOW
+    arguments: pin
+    response: OK
+
+GETP # Read pin
+    arguments: pin
+    response: OK, value
+
 All commands and arguments end in a CRLF terminator (\r\n)

@@ -245,6 +245,31 @@ void loop() {
     Serial3.print("Toggling verbose output...\r\n");
     verboseOut = !verboseOut;
   }
+  else if (serialCmd == "PINH\r") { // Set pin HIGH
+    Serial3.print("OK\r\n");
+    recvArgs(1);
+    if(verboseOut) {
+      Serial3.print("Setting pin: " + args[0] + " HIGH\r\n");
+    }
+    digitalWrite(extPins[args[0].toInt()-1], HIGH);
+  }
+  else if (serialCmd == "PINL\r") { // Set pin LOW
+    Serial3.print("OK\r\n");
+    recvArgs(1);
+    if(verboseOut) {
+      Serial3.print("Setting pin: " + args[0] + " LOW\r\n");
+    }
+    digitalWrite(extPins[args[0].toInt()-1], LOW);
+  }
+  else if (serialCmd == "GETP\r") { // Read pin
+    Serial3.print("OK\r\n");
+    recvArgs(1);
+    String readResult = String(digitalRead(extPins[args[0].toInt()-1]));
+    Serial3.print(readResult + "\r\n");
+    if(verboseOut) {
+      Serial3.print("Pin " + args[0] + "'s state is " + readResult + "\r\n");
+    }
+  }
   else { // ERROR - Error if command not recognized
     Serial3.print("ERROR\r\n");
   }
